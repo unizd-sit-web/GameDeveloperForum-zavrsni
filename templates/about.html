@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+    <script src="./bootstrap/js/bootstrap.min.js" defer></script>
+    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="section.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="container content-root-div">
+        <div class="section-title mb-5">
+            <h1 class="text-center">About</h1>
+        </div>
+        <h2>What is it?</h2>
+        <p>
+            This is a collage project made by two IT students for the purpose of
+            learning how to use common web technologies such as HTML, CSS and JavaScript.
+        </p>
+            It's a forum for disccusing all things related to game development.
+            Maybe you don't know how to do something in a game engine or want to share
+            what you've been working on? well, this is the place to write about that.
+        </p>
+        <h2 class="mt-5">Libraries</h2>
+        <p>
+            We are also using a few libraries to make things easier. JQuery make it super
+            easy to select and manipulate DOM elements. Bootstrap gives us the ability to 
+            apply cool styles to our web pages and make them look professional.
+        </p>
+    </div>
+    <div id="footer-placeholder"></div>
+    <script defer>
+        // load navbar template
+        $("#navbar-placeholder").load("navbar.html");
+        // load
+        $("#footer-placeholder").load("footer.html");
+    </script>
+</body>
+</html>

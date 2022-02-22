@@ -1,0 +1,53 @@
+.ftr {
+    margin-top: 20px;
+    position: relative;
+    bottom: 0px;
+    width: 100%;
+    height: fit-content;
+    padding: 10px;
+    background-color: #2f3640;
+    color: rgb(185, 184, 184);
+}
+
+.ftr a {
+    color: black;
+    text-decoration: none;
+}
+
+.ftr a:hover {
+    color: white;
+}
+
+.ftr-list li::before {
+    content: "▶ ";
+}
+
+
+* {
+    margin: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+.content-root-div {
+    min-height: 100%;
+    margin-bottom: -142px;
+}
+
+.content-root-div:after {
+    content: "";
+    display: block;
+}
+
+.ftr,
+.content-root-div:after {
+    height: 142px;
+}
+
+.ftr {
+    color: black;
+    background: orange;
+}
