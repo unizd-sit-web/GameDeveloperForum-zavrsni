@@ -1,11 +1,14 @@
 from concurrent.futures import thread
+from multiprocessing.spawn import import_main_path
 from flask import Flask, redirect, render_template, request, Response
 from random import randint
+import json
+from app_factory import create_app
 
-from itsdangerous import json
-
-app = Flask(__name__)
-
+config = {
+    "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
+}
+app = create_app(config)
 # sample data for testing
 database = {
     "sections": {
