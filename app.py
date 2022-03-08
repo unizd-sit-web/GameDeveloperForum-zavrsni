@@ -4,9 +4,10 @@ from flask import Flask, redirect, render_template, request, Response
 from random import randint
 import json
 from app_factory import create_app
+from db_controller import *
 
 config = {
-    "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
+    "MONGO_URI" : "mongodb://localhost:27017/GameDeveloperForum"
 }
 app = create_app(config)
 # sample data for testing
@@ -140,6 +141,35 @@ database = {
         /privacy
         /login
 """
+
+# TODO debug
+@app.route('/debug')
+def debug():
+    """site = ""
+    cats = get_categories_in_section("Forum")
+    print(cats)
+    for cat in cats:
+        site += cat["title"] + "\n"
+        threads = get_threads_in_category(cat["category_id"])
+        print(threads)
+        for thread in threads:
+            print(thread)
+            site += "\t" + thread["title"] + "\n"
+            posts = get_posts_in_thread(thread["thread_id"])
+            print(posts)
+            for post in posts:
+                site += "\t\t" + post["content"] + "\n"
+    return site"""
+    cats = get_categories_in_section("Forum", 1)
+    site = "<ul>"
+    for cat in cats:
+        ats = "<ul>"
+        for at in cat:
+            ats += "<li>" + at + "</li>"
+            ats += "</ul>"
+        site += "<li>" + ats + "</li>"
+    site += "</ul>"
+    return site
 
 # list news threads
 @app.route("/", methods=["GET"])
