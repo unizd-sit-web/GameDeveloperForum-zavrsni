@@ -6,13 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-    <script src="./bootstrap/js/bootstrap.min.js" defer></script>
-    <link rel="stylesheet" href="footer.css">
-    <link rel="stylesheet" href="section.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/bootstrap/css/bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='js/bootstrap/js/bootstrap.min.js')}}" defer></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/footer.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/section.css')}}">
 </head>
 <body>
-    <div id="navbar-placeholder"></div>
+    {% include "navbar.html" %}
     <div class="container content-root-div">
         <div class="section-title mb-5">
             <h1 class="text-center">About</h1>
@@ -33,12 +33,6 @@
             apply cool styles to our web pages and make them look professional.
         </p>
     </div>
-    <div id="footer-placeholder"></div>
-    <script defer>
-        // load navbar template
-        $("#navbar-placeholder").load("navbar.html");
-        // load
-        $("#footer-placeholder").load("footer.html");
-    </script>
+    {% include "footer.html" %}
 </body>
 </html>
