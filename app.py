@@ -7,7 +7,7 @@ from app_factory import create_app
 from db_controller import *
 
 config = {
-    "MONGO_URI" : "mongodb://localhost:27017/GameDeveloperForum"
+    "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
 }
 app = create_app(config)
 # sample data for testing
@@ -160,7 +160,8 @@ def debug():
             for post in posts:
                 site += "\t\t" + post["content"] + "\n"
     return site"""
-    cats = get_categories_in_section("Forum", 1)
+
+    """cats = get_categories_in_section("Forum", 1)
     site = "<ul>"
     for cat in cats:
         ats = "<ul>"
@@ -169,7 +170,9 @@ def debug():
             ats += "</ul>"
         site += "<li>" + ats + "</li>"
     site += "</ul>"
-    return site
+    return site"""
+    id = create_post("Mega", "content", "2022", "t88c4p63s0")
+    return "", 201
 
 # list news threads
 @app.route("/", methods=["GET"])
