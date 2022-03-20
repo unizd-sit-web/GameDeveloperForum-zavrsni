@@ -63,9 +63,9 @@ from random import choice
         [✔] create category
         [✔] create thread
         [✔] create post
-        [] update category
-        [] update thread
-        [] upate post
+        [✔] update category
+        [✔] update thread
+        [✔] upate post
         [] delete category
         [] delete thread
         [] delete post
@@ -255,3 +255,82 @@ def create_post(author: str, content: str, creation_date: str, thread_id: str) -
     mongo.db.threads.update_one({"thread_id": parent_thread["thread_id"]}, {"$push": {"posts": post_id}})
 
     return post_id
+
+def update_category(category_id: str, new_data: str) -> None:
+    """
+        Updates the category data by overwriting fields with new_data.
+
+        Raises NoSuchElementException if category does not exist.
+    """
+    # check if category exists
+    category = mongo.db.categories.find_one({"category_id": category_id})
+    if category is None:
+        raise ValueError(f"category called {category_id} does not exist")
+
+    # validate input
+    if new_data is None or len(new_data) == 0:
+        raise ValueError("new_data cannot be empty")    
+    
+    # filter fields
+    to_update = {}
+    if "title" in new_data:
+        if new_data["title"] is None or len(new_data["title"]) == 0:
+            raise ValueError("new_data.title cannot be empty")
+        to_update["title"] = new_data["title"]
+
+    # update category
+    mongo.db.categories.update_one({"category_id": category_id}, {"$set": to_update})
+
+def update_thread(thread_id: str, new_data: dict) -> None:
+    """
+        Updates the thread data by overwriting fields with new_data.
+
+        Raises NoSuchElementException if thread does not exist.
+    """
+    # check if thread exists
+    thread = mongo.db.threads.find_one({"thread_id": thread_id})
+    if thread is None:
+        raise ValueError(f"thread called {thread_id} does not exist")
+
+    # validate input
+    if new_data is None or len(new_data) == 0:
+        raise ValueError("new_data cannot be empty")    
+    
+    # filter fields
+    to_update = {}
+    if "title" in new_data:
+        if new_data["title"] is None or len(new_data["title"]) == 0:
+            raise ValueError("new_data.title cannot be empty")
+        to_update["title"] = new_data["title"]
+
+    # update thread
+    mongo.db.threads.update_one({"thread_id": thread_id}, {"$set": to_update})
+
+def update_post(post_id: str, new_data: dict) -> None:
+    """
+        Updates the post data by overwriting fields with new_data.
+
+        Raises NoSuchElementException if post does not exist.
+    """
+    # check if post exists
+    post = mongo.db.posts.find_one({"post_id": post_id})
+    if post is None:
+        raise ValueError(f"post called {post_id} does not exist")
+
+    # validate input
+    if new_data is None or len(new_data) == 0:
+        raise ValueError("new_data cannot be empty")    
+    
+    # filter fields
+    to_update = {}
+    if "content" in new_data:
+        if new_data["content"] is None or len(new_data["content"]) == 0:
+            raise ValueError("new_data.content cannot be empty")
+        to_update["content"] = new_data["content"]
+    if "last_edit_date" in new_data:
+        if new_data["last_edit_date"] is None or len(new_data["last_edit_date"]) == 0:
+            raise ValueError("new_data.last_edit_date cannot be empty")
+        to_update["last_edit_date"] = new_data["last_edit_date"]
+
+    # update post
+    mongo.db.posts.update_one({"post_id": post_id}, {"$set": to_update})

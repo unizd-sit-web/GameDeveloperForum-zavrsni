@@ -171,7 +171,7 @@ def debug():
         site += "<li>" + ats + "</li>"
     site += "</ul>"
     return site"""
-    id = create_post("Mega", "content", "2022", "t88c4p63s0")
+    id = update_post("60f30841h0", {"content": "modified post content", "last_edit_date": "2022-01-01"})
     return "", 201
 
 # list news threads
