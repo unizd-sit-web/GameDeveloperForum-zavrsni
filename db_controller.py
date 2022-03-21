@@ -66,9 +66,9 @@ from random import choice
         [✔] update category
         [✔] update thread
         [✔] upate post
-        [] delete category
-        [] delete thread
-        [] delete post
+        [✔] delete category
+        [✔] delete thread
+        [✔] delete post
 """
 
 """
@@ -334,3 +334,61 @@ def update_post(post_id: str, new_data: dict) -> None:
 
     # update post
     mongo.db.posts.update_one({"post_id": post_id}, {"$set": to_update})
+
+def delete_post(post_id: str) -> None:
+    """
+        Deletes the post.
+
+        Raises NoSuchElementException if post does not exist.
+    """
+    # check if post exists
+    post = mongo.db.posts.find_one({"post_id": post_id})
+    if post is None:
+        raise ValueError(f"post called {post_id} does not exist")
+
+    # remove post from thread
+    mongo.db.threads.update_one({"thread_id": post["parent_thread_id"]}, {"$pull": {"posts": post_id}})
+
+    # delete post
+    mongo.db.posts.delete_one({"post_id": post_id})
+
+def delete_thread(thread_id: str) -> None:
+    """
+        Deletes the thread and all its posts.
+
+        Raises NoSuchElementException if thread does not exist.
+    """
+    # check if thread exists
+    thread = mongo.db.threads.find_one({"thread_id": thread_id})
+    if thread is None:
+        raise ValueError(f"thread called {thread_id} does not exist")
+
+    # delete posts
+    mongo.db.posts.delete_many({"parent_thread_id": thread_id})
+
+    # remove thread from category
+    mongo.db.categories.update_one({"category_id": thread["parent_category_id"]}, {"$pull": {"threads": thread_id}})
+
+    # delete thread
+    mongo.db.threads.delete_one({"thread_id": thread_id})
+
+def delete_category(category_id: str) -> None:
+    """
+        Deletes the category and all its threads and posts.
+
+        Raises NoSuchElementException if category does not exist.
+    """
+    # check if category exists
+    category = mongo.db.categories.find_one({"category_id": category_id})
+    if category is None:
+        raise ValueError(f"category called {category_id} does not exist")
+
+    # delete threads
+    for thread_id in category["threads"]:
+        delete_thread(thread_id)
+
+    # remove category from section
+    mongo.db.sections.update_one({"section_id": category["parent_section_id"]}, {"$pull": {"categories": category_id}})
+    
+    # delete category
+    mongo.db.categories.delete_one({"category_id": category_id})

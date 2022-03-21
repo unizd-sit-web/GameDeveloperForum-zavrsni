@@ -171,7 +171,8 @@ def debug():
         site += "<li>" + ats + "</li>"
     site += "</ul>"
     return site"""
-    id = update_post("60f30841h0", {"content": "modified post content", "last_edit_date": "2022-01-01"})
+    #id = update_post("60f30841h0", {"content": "modified post content", "last_edit_date": "2022-01-01"})
+    delete_category("tlhgph892k2")
     return "", 201
 
 # list news threads
