@@ -131,28 +131,31 @@ def generate_random_id(length: int) -> str:
 
     return id
 
-def get_categories_in_section(section_name: str, limit: int) -> list | None:
+def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> list | None:
     """
         Returns a list of limit categories in the section or None if the section does not exist.
+        If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
     section = mongo.db.sections.find_one({"title": section_name})
     if section is None:
         return None
     section_id = section["section_id"]
 
-    return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).limit(limit))
+    return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).skip(skip).limit(limit))
 
-def get_threads_in_category(category_id: str, limit: int) -> list:
+def get_threads_in_category(category_id: str, limit: int, skip: int = 0) -> list:
     """
         Returns a list of limit threads in the category.
+        If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
-    return list(mongo.db.threads.find({"parent_category_id": category_id}, thread_projection_map).limit(limit))
+    return list(mongo.db.threads.find({"parent_category_id": category_id}, thread_projection_map).skip(skip).limit(limit))
 
-def get_posts_in_thread(thread_id: str, limit: int) -> list:
+def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0) -> list:
     """
         Returns a list of limit posts in the thread.
+        If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
-    return list(mongo.db.posts.find({"parent_thread_id": thread_id}, post_projection_map).limit(limit))
+    return list(mongo.db.posts.find({"parent_thread_id": thread_id}, post_projection_map).skip(skip).limit(limit))
 
 def create_category(title: str, section_name: str) -> str:
     """
@@ -338,7 +341,7 @@ def update_post(post_id: str, new_data: dict) -> None:
         to_update["last_edit_date"] = new_data["last_edit_date"]
     if len(to_update) == 0:
         raise ValueError("new_data has no valid fields")
-        
+
     # update post
     mongo.db.posts.update_one({"post_id": post_id}, {"$set": to_update})
 
