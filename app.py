@@ -9,59 +9,8 @@ from db_controller import *
 config = {
     "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
 }
+
 app = create_app(config)
-# sample data for testing
-database = {
-    "sections": {
-        "news": {
-            "title": "News",
-            "categories": {
-                "news_category": {
-                    "title": "What's new",
-                    "threads": {
-                        "751589": {
-                            "id": "751589",
-                            "title": "Plans for the forum",
-                            "posts": {
-                                "28510":{
-                                    "id": "28510",
-                                    "author": "Joda",
-                                    "content": "hello world",
-                                    "creation_date": "2022-01-01",
-                                    "last_edit_date": "2022-01-01"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "forum": {
-            "title": "Forum",
-            "categories": {
-                "7825": {
-                    "id": "7825",
-                    "title": "General",
-                    "threads": {
-                        "8575236": {
-                            "id": "8575236",
-                            "title": "How to use the forum",
-                            "posts": {
-                                "28510":{
-                                    "id": "28510",
-                                    "author": "Obi-Wan Kenobi",
-                                    "content": "hello world",
-                                    "creation_date": "2022-01-01",
-                                    "last_edit_date": "2022-01-01"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 """ 
     Static/API server structure:
@@ -142,59 +91,43 @@ database = {
         /login
 """
 
-# TODO debug
-@app.route('/debug')
-def debug():
-    """site = ""
-    cats = get_categories_in_section("Forum")
-    print(cats)
-    for cat in cats:
-        site += cat["title"] + "\n"
-        threads = get_threads_in_category(cat["category_id"])
-        print(threads)
-        for thread in threads:
-            print(thread)
-            site += "\t" + thread["title"] + "\n"
-            posts = get_posts_in_thread(thread["thread_id"])
-            print(posts)
-            for post in posts:
-                site += "\t\t" + post["content"] + "\n"
-    return site"""
-
-    """cats = get_categories_in_section("Forum", 1)
-    site = "<ul>"
-    for cat in cats:
-        ats = "<ul>"
-        for at in cat:
-            ats += "<li>" + at + "</li>"
-            ats += "</ul>"
-        site += "<li>" + ats + "</li>"
-    site += "</ul>"
-    return site"""
-    #id = update_post("60f30841h0", {"content": "modified post content", "last_edit_date": "2022-01-01"})
-    delete_category("tlhgph892k2")
-    return "", 201
-
 # list news threads
 @app.route("/", methods=["GET"])
-def index_threads():
-    news_threads = database["sections"]["news"]["categories"]["news_category"]["threads"]
-    threads_filtered = []
-    for thread_id in news_threads:
-        threads_filtered.append({
-            "id": thread_id,
-            "title": news_threads[thread_id]["title"],
-            "redir_url": f"/news/threads/{thread_id}/posts"
-        })
-    return render_template("index.html", threads=threads_filtered)
+def index_threads():    
+    news_categories = get_categories_in_section("news", 1)
+    if news_categories == None:
+        return "", 404
+
+    news_category = None
+    if len(news_categories) > 0:
+        news_category = news_categories[0]
+    if news_category == None:
+        return "", 404
+
+    news_threads = get_threads_in_category(news_category["category_id"], 10)
+
+    return render_template("index.html", threads=news_threads)
 
 # create news thread
 @app.route("/", methods=["POST"])
 def index_post_thread():
     thread_data = request.get_json()
-    thread_id = str(randint(0, 1000000))
-    # TODO: currently not checking if data is valid for simplicity
-    database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id] = thread_data
+
+    if not "title" in thread_data:
+        return "", 400
+
+    news_categories = get_categories_in_section("news", 1)
+    if news_categories == None:
+        return "", 404
+
+    news_category = None
+    if len(news_categories) > 0:
+        news_category = news_categories[0]
+    if news_category == None:
+        return "", 404
+
+    thread_id = create_thread(thread_data["title"], news_category["category"])
+
     return json.dumps({"new_thread_id": thread_id}), 201
 
 # update news thread
@@ -207,7 +140,10 @@ def update_news_thread(thread_id):
         }
     """
     thread_data = request.get_json()
-    database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["title"] = thread_data["title"]
+    #database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["title"] = thread_data["title"]
+    # check if thread exists
+    
+    update_thread(thread_id, thread_data) # TODO should return boolean
     return Response(status=204)
 
 # delete news thread

@@ -131,9 +131,9 @@ def generate_random_id(length: int) -> str:
 
     return id
 
-def get_categories_in_section(section_name: str, limit: int) -> list:
+def get_categories_in_section(section_name: str, limit: int) -> list | None:
     """
-        Returns a list of limit categories in the section.
+        Returns a list of limit categories in the section or None if the section does not exist.
     """
     section = mongo.db.sections.find_one({"title": section_name})
     if section is None:
@@ -161,12 +161,13 @@ def create_category(title: str, section_name: str) -> str:
         Returns the category id.
 
         Raises NoSuchElementException if section does not exist.
+        Raises ValueError if
     """
     # check if parent section exists
     parent_section = mongo.db.sections.find_one({"title": section_name})
     if parent_section is None:
-        raise ValueError(f"section called {section_name} does not exist")
-
+        raise NoSuchElementException(f"section called {section_name} does not exist")
+ 
     # validate input
     if title is None or len(title) == 0:
         raise ValueError("title cannot be empty")
@@ -182,8 +183,8 @@ def create_category(title: str, section_name: str) -> str:
     mongo.db.categories.insert_one(category)
 
     # insert category into section
-    mongo.db.sections.update_one({"section_id": parent_section["section_id"]}, {"$push": {"categories": category_id}})
-
+    mongo.db.sections.update_one({"section_name": section_name}, {"$push": {"categories": category_id}})
+    
     return category_id
 
 def create_thread(title: str, category_id: str) -> str:
@@ -197,7 +198,7 @@ def create_thread(title: str, category_id: str) -> str:
     # check if parent category exists
     parent_category = mongo.db.categories.find_one({"category_id": category_id})
     if parent_category is None:
-        raise ValueError(f"category called {category_id} does not exist")
+        raise NoSuchElementException(f"category called {category_id} does not exist")
 
     # validate input
     if title is None or len(title) == 0:
@@ -229,7 +230,7 @@ def create_post(author: str, content: str, creation_date: str, thread_id: str) -
     # check if thread exists
     parent_thread = mongo.db.threads.find_one({"thread_id": thread_id})
     if parent_thread is None:
-        raise ValueError(f"thread called {thread_id} does not exist")
+        raise NoSuchElementException(f"thread called {thread_id} does not exist")
     
     # validate input
     if author is None or len(author) == 0:
@@ -265,7 +266,7 @@ def update_category(category_id: str, new_data: str) -> None:
     # check if category exists
     category = mongo.db.categories.find_one({"category_id": category_id})
     if category is None:
-        raise ValueError(f"category called {category_id} does not exist")
+        raise NoSuchElementException(f"category called {category_id} does not exist")
 
     # validate input
     if new_data is None or len(new_data) == 0:
@@ -277,6 +278,8 @@ def update_category(category_id: str, new_data: str) -> None:
         if new_data["title"] is None or len(new_data["title"]) == 0:
             raise ValueError("new_data.title cannot be empty")
         to_update["title"] = new_data["title"]
+    if len(to_update) == 0:
+        raise ValueError("new_data has no valid fields")
 
     # update category
     mongo.db.categories.update_one({"category_id": category_id}, {"$set": to_update})
@@ -290,7 +293,7 @@ def update_thread(thread_id: str, new_data: dict) -> None:
     # check if thread exists
     thread = mongo.db.threads.find_one({"thread_id": thread_id})
     if thread is None:
-        raise ValueError(f"thread called {thread_id} does not exist")
+        raise NoSuchElementException(f"thread called {thread_id} does not exist")
 
     # validate input
     if new_data is None or len(new_data) == 0:
@@ -302,6 +305,8 @@ def update_thread(thread_id: str, new_data: dict) -> None:
         if new_data["title"] is None or len(new_data["title"]) == 0:
             raise ValueError("new_data.title cannot be empty")
         to_update["title"] = new_data["title"]
+    if len(to_update) == 0:
+        raise ValueError("new_data has no valid fields")
 
     # update thread
     mongo.db.threads.update_one({"thread_id": thread_id}, {"$set": to_update})
@@ -315,7 +320,7 @@ def update_post(post_id: str, new_data: dict) -> None:
     # check if post exists
     post = mongo.db.posts.find_one({"post_id": post_id})
     if post is None:
-        raise ValueError(f"post called {post_id} does not exist")
+        raise NoSuchElementException(f"post called {post_id} does not exist")
 
     # validate input
     if new_data is None or len(new_data) == 0:
@@ -331,7 +336,9 @@ def update_post(post_id: str, new_data: dict) -> None:
         if new_data["last_edit_date"] is None or len(new_data["last_edit_date"]) == 0:
             raise ValueError("new_data.last_edit_date cannot be empty")
         to_update["last_edit_date"] = new_data["last_edit_date"]
-
+    if len(to_update) == 0:
+        raise ValueError("new_data has no valid fields")
+        
     # update post
     mongo.db.posts.update_one({"post_id": post_id}, {"$set": to_update})
 
