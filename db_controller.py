@@ -354,7 +354,7 @@ def delete_post(post_id: str) -> None:
     # check if post exists
     post = mongo.db.posts.find_one({"post_id": post_id})
     if post is None:
-        raise ValueError(f"post called {post_id} does not exist")
+        raise NoSuchElementException(f"post called {post_id} does not exist")
 
     # remove post from thread
     mongo.db.threads.update_one({"thread_id": post["parent_thread_id"]}, {"$pull": {"posts": post_id}})
@@ -371,7 +371,7 @@ def delete_thread(thread_id: str) -> None:
     # check if thread exists
     thread = mongo.db.threads.find_one({"thread_id": thread_id})
     if thread is None:
-        raise ValueError(f"thread called {thread_id} does not exist")
+        raise NoSuchElementException(f"thread called {thread_id} does not exist")
 
     # delete posts
     mongo.db.posts.delete_many({"parent_thread_id": thread_id})
@@ -391,7 +391,7 @@ def delete_category(category_id: str) -> None:
     # check if category exists
     category = mongo.db.categories.find_one({"category_id": category_id})
     if category is None:
-        raise ValueError(f"category called {category_id} does not exist")
+        raise NoSuchElementException(f"category called {category_id} does not exist")
 
     # delete threads
     for thread_id in category["threads"]:
