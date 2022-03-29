@@ -138,7 +138,7 @@ def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> l
     """
     section = mongo.db.sections.find_one({"title": section_name})
     if section is None:
-        return []
+        raise NoSuchElementException(f"section called {section_name} does not exist")
     section_id = section["section_id"]
 
     return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).skip(skip).limit(limit))
@@ -148,6 +148,10 @@ def get_threads_in_category(category_id: str, limit: int, skip: int = 0) -> list
         Returns a list of limit threads in the category.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
+    category = mongo.db.categories.find_one({"category_id": category_id})
+    if category is None:
+        raise NoSuchElementException(f"category with id {category_id} does not exist")
+
     return list(mongo.db.threads.find({"parent_category_id": category_id}, thread_projection_map).skip(skip).limit(limit))
 
 def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0) -> list:
@@ -155,6 +159,10 @@ def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0) -> list:
         Returns a list of limit posts in the thread.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
+    thead = mongo.db.threads.find_one({"thread_id": thread_id})
+    if thead is None:
+        raise NoSuchElementException(f"thread called {thread_id} does not exist")
+        
     return list(mongo.db.posts.find({"parent_thread_id": thread_id}, post_projection_map).skip(skip).limit(limit))
 
 def create_category(title: str, section_name: str) -> str:
