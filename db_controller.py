@@ -131,14 +131,14 @@ def generate_random_id(length: int) -> str:
 
     return id
 
-def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> list | None:
+def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> list:
     """
         Returns a list of limit categories in the section or None if the section does not exist.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
     """
     section = mongo.db.sections.find_one({"title": section_name})
     if section is None:
-        return None
+        return []
     section_id = section["section_id"]
 
     return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).skip(skip).limit(limit))
