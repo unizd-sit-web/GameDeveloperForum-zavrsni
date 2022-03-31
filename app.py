@@ -1,16 +1,17 @@
-from concurrent.futures import thread
-from multiprocessing.spawn import import_main_path
-from flask import Flask, redirect, render_template, request, Response
-from random import randint
+from flask import render_template, request, Response
 import json
 from app_factory import create_app
 from db_controller import *
+from datetime import datetime
 
 config = {
     "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
 }
 
 app = create_app(config)
+
+# constants
+PAGE_ELEMENT_COUNT = 10
 
 """ 
     Static/API server structure:
@@ -91,42 +92,50 @@ app = create_app(config)
         /login
 """
 
+def get_formated_time():
+    # format: day-month-year
+    return datetime.now().strftime("%d-%m-%Y")
+
 # list news threads
 @app.route("/", methods=["GET"])
-def index_threads():    
-    news_categories = get_categories_in_section("news", 1)
+def get_news_threads():    
+    news_categories = get_categories_in_section("news", 1, 0)
     if news_categories == None:
         return "", 404
 
     news_category = None
     if len(news_categories) > 0:
         news_category = news_categories[0]
-    if news_category == None:
+    else:
         return "", 404
 
-    news_threads = get_threads_in_category(news_category["category_id"], 10)
+    page = request.args.get("page", 0, type=int)
+    news_threads = get_threads_in_category(news_category["category_id"], PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
 
     return render_template("index.html", threads=news_threads)
 
 # create news thread
 @app.route("/", methods=["POST"])
-def index_post_thread():
+def create_news_thread():
     thread_data = request.get_json()
 
     if not "title" in thread_data:
-        return "", 400
+        return json.dumps({"error": "Title is required"}), 400
 
-    news_categories = get_categories_in_section("news", 1)
+    news_categories = get_categories_in_section("news", 1, 0)
     if news_categories == None:
-        return "", 404
+        return json.dumps("Main news category does not exist"), 404
 
     news_category = None
     if len(news_categories) > 0:
         news_category = news_categories[0]
-    if news_category == None:
-        return "", 404
+    else:
+        return json.dumps("Main news category does not exist"), 404
 
-    thread_id = create_thread(thread_data["title"], news_category["category"])
+    try:
+        thread_id = create_thread(thread_data["title"], news_category["category_id"])
+    except NoSuchElementException | ValueError:
+        return json.dumps({"error": "Internal error"}), 500
 
     return json.dumps({"new_thread_id": thread_id}), 201
 
@@ -140,39 +149,61 @@ def update_news_thread(thread_id):
         }
     """
     thread_data = request.get_json()
-    #database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["title"] = thread_data["title"]
-    # check if thread exists
+    if thread_data == None or len(thread_data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
     
-    update_thread(thread_id, thread_data) # TODO should return boolean
+    try:
+        update_thread(thread_id, thread_data)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return Response(status=204)
 
 # delete news thread
 @app.route("/news/threads/<thread_id>", methods=["DELETE"])
 def delete_news_thread(thread_id):
-    # TODO: check if thread exists first
-    del database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]
+    try:
+        delete_thread(thread_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
     return Response(status=204)
    
-# get posts from news thread
+# get news posts
 @app.route("/news/threads/<thread_id>/posts", methods=["GET"])
-def news_thread(thread_id):
-    thread = database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]
-    posts = []
-    for post_id in thread["posts"]:
-        posts.append(thread["posts"][post_id])
-    return render_template("thread.html", title=thread["title"], posts=posts)
+def get_news_posts(thread_id):    
+    page = request.args.get("page", 0, type=int)
+    try:
+        posts = get_posts_in_thread(thread_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
+    return render_template("thread.html", posts=posts)
 
 # create post in news thread
 @app.route("/news/threads/<thread_id>/posts", methods=["POST"])
-def news_post_post(thread_id):
-    # save post
+def create_news_post(thread_id):
     post_data = request.get_json()
-    post_id = str(randint(0, 1000000))
-    # TODO currently not checking if data is valid for simplicity
-    database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["posts"][post_id] = post_data
+    if post_data == None or len(post_data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    if not "content" in post_data:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    # TODO: Using "Admin" for now, but username should be fetched from the 
+    # login system once it is implemented.
+    try:
+        post_id = create_post("Admin", post_data["content"], get_formated_time(), thread_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return json.dumps({"new_post_id": post_id}), 201
 
-# update post in news thread
+# update news post
 @app.route("/news/threads/<thread_id>/posts/<post_id>", methods=["PUT"])
 def update_news_post(thread_id, post_id):
     """
@@ -182,50 +213,59 @@ def update_news_post(thread_id, post_id):
         }
     """
     post_data = request.get_json()
-    database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["posts"][post_id]["content"] = post_data["content"]
+    if post_data == None or len(post_data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        update_post(post_id, post_data)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Post with id {post_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return Response(status=204)
+
 
 # delete post in a news thread
 @app.route("/news/threads/<thread_id>/posts/<post_id>", methods=["DELETE"])
-def delete_news_post(thread_id, post_id):
-    # TODO: check if post exists first
-    del database["sections"]["news"]["categories"]["news_category"]["threads"][thread_id]["posts"][post_id]
+def delete_news_post(thread_id, post_id):    
+    try:
+        delete_post(post_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Post with id {post_id} does not exist"}), 404
+    
     return Response(status=204)
+
 
 # get forum categories
 @app.route("/forum/categories", methods=["GET"])
-def forum_categories():
-    forum_categories = database["sections"]["forum"]["categories"]
-    categories_filtered = []
-    for category_id in forum_categories:
-        categories_filtered.append({
-            "id": category_id,
-            "title": forum_categories[category_id]["title"],
-            "redir_url": f"/forum/categories/{category_id}/threads"
-        })
-    return render_template("forum.html", categories=categories_filtered)
+def get_forum_categories():
+    page = request.args.get("page", 0, type=int)
+    try:
+        forum_categories = get_categories_in_section("forum", PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Forum section does not exist"}), 404
+    
+    return render_template("forum.html", categories=forum_categories)
 
 # create forum category
 @app.route("/forum/categories", methods=["POST"])
-def forum_post_category():
+def create_forum_category():
     data = request.get_json()
-    category_id = str(randint(0, 1000000))
-    # TODO: currently not checking if data is valid for simplicity
-    database["sections"]["forum"]["categories"][category_id] = data
-    return json.dumps({"new_category_id": category_id}), 201
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+    
+    if not "title" in data:
+        return json.dumps({"error": "Invalid request body"}), 400
 
-# get forum category
-@app.route("/forum/categories/<category_id>/threads", methods=["GET"])
-def forum_category(category_id):
-    category = database["sections"]["forum"]["categories"][category_id]
-    threads_filtered = []
-    for thread_id in category["threads"]:
-        threads_filtered.append({
-            "id": thread_id,
-            "title": category["threads"][thread_id]["title"],
-            "redir_url": f"/forum/categories/{category_id}/threads/{thread_id}/posts"
-        })
-    return render_template("category.html", title=category["title"],threads=threads_filtered)
+    try:
+        category_id = create_category(data["title"], "forum")
+    except NoSuchElementException:
+        return json.dumps({"error": f"Forum section does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    return json.dumps({"new_category_id": category_id}), 201
 
 # update forum category
 @app.route("/forum/categories/<category_id>", methods=["PUT"])
@@ -237,31 +277,69 @@ def update_forum_category(category_id):
         }
     """
     data = request.get_json()
-    # TODO: check data (only allow title to be updated)
-    database["sections"]["forum"]["categories"][category_id]["title"] = data["title"]
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    if not "title" in data:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        update_category(category_id, data)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return Response(status=204)
 
+# delete forum category
 @app.route("/forum/categories/<category_id>", methods=["DELETE"])
 def delete_forum_category(category_id):
-    # TODO: check if category exists first
-    del database["sections"]["forum"]["categories"][category_id]
+    try:
+        delete_category(category_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
+    
     return Response(status=204)
+    
+# get threads from forum category
+@app.route("/forum/categories/<category_id>/threads", methods=["GET"])
+def get_forum_threads(category_id):
+    page = request.args.get("page", 0, type=int)
+    try:
+        threads = get_threads_in_category(category_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
+
+    return render_template("category.html", threads=threads)
 
 # create forum thread
 @app.route("/forum/categories/<category_id>/threads", methods=["POST"])
-def forum_post_thread(category_id):
+def create_forum_thread(category_id):
     data = request.get_json()
-    thread_id = str(randint(0, 1000000))
-    # TODO: currently not checking if data is valid for simplicity
-    database["sections"]["forum"]["categories"][category_id]["threads"][thread_id] = data
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    if not "title" in data:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        thread_id = create_thread(data["title"], category_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return json.dumps({"new_thread_id": thread_id}), 201
 
 # delete thread in forum category
 @app.route("/forum/categories/<category_id>/threads/<thread_id>", methods=["DELETE"])
 def delete_forum_thread(category_id, thread_id):
-    data = request.get_json()
-    # TODO: check if thread exists first
-    del database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]
+    try:
+        delete_thread(thread_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
     return Response(status=204)
 
 # update thread in forum category
@@ -274,28 +352,50 @@ def update_forum_thread(category_id, thread_id):
         }
     """
     data = request.get_json()
-    # TODO: check data (only allow title to be updated)
-    database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]["title"] = data["title"]
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    if not "title" in data:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        update_thread(thread_id, data)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return Response(status=204)
+
+# create new post in thread in forum category
+@app.route("/forum/categories/<category_id>/threads/<thread_id>/posts", methods=["POST"])
+def create_forum_post(category_id, thread_id):
+    post_data = request.get_json()
+    if post_data == None or len(post_data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+    
+    if not "content" in post_data:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        post_id = create_post("Admin", post_data["content"], get_formated_time(), thread_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+        
+    return json.dumps({"new_post_id": post_id}), 201
 
 # get posts from thread in forum category
 @app.route("/forum/categories/<category_id>/threads/<thread_id>/posts", methods=["GET"])
-def forum_thread(category_id, thread_id):
-    thread = database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]
-    posts = []
-    for post_id in thread["posts"]:
-        posts.append(thread["posts"][post_id])
-    return render_template("thread.html", title=thread["title"], posts=posts)
+def get_forum_posts(category_id, thread_id):
+    page = request.args.get("page", 0, type=int)
+    try:
+        posts = get_posts_in_thread(thread_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
 
-# create new post ni thread in forum category
-@app.route("/forum/categories/<category_id>/threads/<thread_id>/posts", methods=["POST"])
-def forum_post_post(category_id, thread_id):
-    # save post
-    post_data = request.get_json()
-    post_id = str(randint(0, 1000000))
-    # TODO currently not checking if data is valid for simplicity
-    database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]["posts"][post_id] = post_data
-    return json.dumps({"new_post_id": post_id}), 201
+    return render_template("thread.html", posts=posts)
 
 # update post in thread in forum category
 @app.route("/forum/categories/<category_id>/threads/<thread_id>/posts/<post_id>", methods=["PUT"])
@@ -307,15 +407,26 @@ def update_forum_post(category_id, thread_id, post_id):
         }
     """
     data = request.get_json()
-    # TODO: check data (only allow title to be updated)
-    database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]["posts"][post_id]["content"] = data["content"]
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        update_post(post_id, data)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+
     return Response(status=204)
-    
+
 # delete post in thread in forum category
 @app.route("/forum/categories/<category_id>/threads/<thread_id>/posts/<post_id>", methods=["DELETE"])
 def delete_forum_post(category_id, thread_id, post_id):
-    # TODO: check if post exists first
-    del database["sections"]["forum"]["categories"][category_id]["threads"][thread_id]["posts"][post_id]
+    try:
+        delete_post(post_id)
+    except NoSuchElementException:
+        return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
     return Response(status=204)
 
 @app.route("/login", methods=["GET"])

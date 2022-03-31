@@ -194,7 +194,7 @@ def create_category(title: str, section_name: str) -> str:
     mongo.db.categories.insert_one(category)
 
     # insert category into section
-    mongo.db.sections.update_one({"section_name": section_name}, {"$push": {"categories": category_id}})
+    mongo.db.sections.update_one({"title": section_name}, {"$push": {"categories": category_id}})
     
     return category_id
 
@@ -382,7 +382,8 @@ def delete_thread(thread_id: str) -> None:
         raise NoSuchElementException(f"thread called {thread_id} does not exist")
 
     # delete posts
-    mongo.db.posts.delete_many({"parent_thread_id": thread_id})
+    for post in thread["posts"]:
+        delete_post(post)
 
     # remove thread from category
     mongo.db.categories.update_one({"category_id": thread["parent_category_id"]}, {"$pull": {"threads": thread_id}})
