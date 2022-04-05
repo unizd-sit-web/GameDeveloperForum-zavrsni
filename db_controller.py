@@ -121,15 +121,17 @@ def generate_random_id(length: int) -> str:
     """
         Generates a random alpha-numeric string of length characters.
     """
-    id = ""
-    for x in range(length):
-        is_letter = choice([True, False])
-        if is_letter:
-            id += choice(list("abcdefghijklmnopqrstuvwxyz"))
-        else:
-            id += choice(list("0123456789"))
-
-    return id
+    while True:
+        id = ""
+        for x in range(length):
+            is_letter = choice([True, False])
+            if is_letter:
+                id += choice(list("abcdefghijklmnopqrstuvwxyz"))
+            else:
+                id += choice(list("0123456789"))
+        # prevent id from conflicting with /threads/new or /categories/new routes
+        if not id == "new":
+            return id
 
 def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> list:
     """

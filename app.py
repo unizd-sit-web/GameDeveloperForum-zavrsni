@@ -114,6 +114,11 @@ def get_news_threads():
 
     return render_template("index.html", threads=news_threads)
 
+# form for creating news threads
+@app.route("/new", methods=["GET"])
+def new_news_thread_form():
+    return render_template("new_thread.html")
+
 # create news thread
 @app.route("/", methods=["POST"])
 def create_news_thread():
@@ -267,6 +272,11 @@ def create_forum_category():
 
     return json.dumps({"new_category_id": category_id}), 201
 
+# form for creating forum categories
+@app.route("/forum/categories/new", methods=["GET"])
+def new_forum_category_form():
+    return render_template("new_category.html")
+
 # update forum category
 @app.route("/forum/categories/<category_id>", methods=["PUT"])
 def update_forum_category(category_id):
@@ -310,7 +320,6 @@ def get_forum_threads(category_id):
         threads = get_threads_in_category(category_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
     except NoSuchElementException:
         return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
-
     return render_template("category.html", threads=threads)
 
 # create forum thread
@@ -331,6 +340,11 @@ def create_forum_thread(category_id):
         return json.dumps({"error": "Invalid request body"}), 400
 
     return json.dumps({"new_thread_id": thread_id}), 201
+
+# form for creating forum threads
+@app.route("/forum/categories/<category_id>/threads/new", methods=["GET"])
+def new_forum_thread_form(category_id):
+    return render_template("new_thread.html")
 
 # delete thread in forum category
 @app.route("/forum/categories/<category_id>/threads/<thread_id>", methods=["DELETE"])
