@@ -18,16 +18,10 @@
     <div class="container content-root-div">
         <div class="section-title">
             <h1>Forum</h1>
+            <button id="new-category-btn" class="btn btn-primary btn-right">New Category</button>
         </div>
         <div id="category-container" class="list-group thread-container">
             <p id="no-categories-label" class="no-threads-label">No categories yet</p>
-            {% for category in categories %}
-                {% with title=category.title %}
-                    {% with redirUrl=category.redir_url %}
-                        {% include "titled_card.html" %}
-                    {% endwith %}
-                {% endwith %}
-            {% endfor %}
         </div>
     </div>
     {% include "footer.html" %}
