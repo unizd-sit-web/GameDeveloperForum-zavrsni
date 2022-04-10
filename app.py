@@ -370,9 +370,14 @@ def api_delete_forum_category(section_name, category_id):
 @app.route("/api/<section_name>/categories", methods=["GET"])
 def api_get_categories(section_name):
     page = request.args.get("page", 0, type=int)
+    # this allows the frontend to fetch info about a specific category
+    category_id_filter = request.args.get("cid", None)
+    if not category_id_filter == None:
+        page = 0
+
     try:
         page = request.args.get("page", 0, type=int)
-        categories = get_categories_in_section(section_name, page, page * PAGE_ELEMENT_COUNT)
+        categories = get_categories_in_section(section_name, page, page * PAGE_ELEMENT_COUNT, category_id_filter)
         return json.dumps({"categories": categories})
     except NoSuchElementException:
         return json.dumps({"error": f"Section {section_name} does not exist"}), 404
@@ -381,8 +386,13 @@ def api_get_categories(section_name):
 @app.route("/api/<section_name>/categories/<category_id>/threads", methods=["GET"])
 def api_get_threads(section_name, category_id):
     page = request.args.get("page", 0, type=int)
+    # this allows the frontend to fetch info about a specific thread
+    thread_id_filter = request.args.get("tid", None)
+    if not thread_id_filter == None:
+        page = 0
+
     try:
-        threads = get_threads_in_category(category_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+        threads = get_threads_in_category(category_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT, thread_id_filter)
         return json.dumps({"threads": threads})
     except NoSuchElementException:
         return json.dumps({"error": f"Category with id {category_id} does not exist"}), 404
@@ -391,8 +401,13 @@ def api_get_threads(section_name, category_id):
 @app.route("/api/<section_name>/categories/<category_id>/threads/<thread_id>/posts", methods=["GET"])
 def api_get_posts(section_name, category_id, thread_id):
     page = request.args.get("page", 0, type=int)
+    # this allows the frontend to fetch info about a specific post
+    post_id_filter = request.args.get("pid", None)
+    if not post_id_filter == None:
+        page = 0
+
     try:
-        posts = get_posts_in_thread(thread_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT)
+        posts = get_posts_in_thread(thread_id, PAGE_ELEMENT_COUNT, page * PAGE_ELEMENT_COUNT, post_id_filter)
         return json.dumps({"posts": posts}) 
     except NoSuchElementException:
         return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
