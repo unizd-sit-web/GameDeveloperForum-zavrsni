@@ -1,49 +1,79 @@
-import {getThreadByIdFiltered, getPostsIds, getPostById, createPost} from "./storage.js"
-import {createPostCard} from "./util.js"
+import {API_BASE_URL, createPostCard} from "./util.js"
 
-// load navbar template
-$("#navbar-placeholder").load("navbar.html")
-// load footer template
-$("#footer-placeholder").load("footer.html")
-
-const searchParams = new URLSearchParams(window.location.search)
-const sectionId = searchParams.get("section_id")
-const categoryId = searchParams.get("category_id")
-const threadId = searchParams.get("thread_id")
 const postContainer = $("#post-container")
 const noPostsLabel = $("#no-posts-label")
-const threadTitle = $("#thread-title")
-const newPostBtn = $("#new-post-btn")
-const contentField = $("#content-field")
+// set the domain of the current url to API_BASE_URL
+const threadEndpointUrl = removeTidFromUrl(API_BASE_URL + window.location.href.replace(/^.*\/\/[^\/]+/, '').replace("/posts", ""))
+const postsEndpointUrl = API_BASE_URL + window.location.href.replace(/^.*\/\/[^\/]+/, '')
+const threadId = window.location.href.replace(/^.*\/\/[^\/]+/, '').replace("/posts", "").split("/").pop()
 
-async function fetchPageTitle(){
-    let thread = await getThreadByIdFiltered(sectionId, categoryId, threadId, ["title"]).catch(console.error)
-    threadTitle.text(thread["title"])
-    document.head.title = thread["title"]
+function removeTidFromUrl(url){
+    let arr = url.split("/")
+    arr.pop()
+    return arr.join("/")
 }
 
-async function fetchPosts(){
-    let ids = await getPostsIds(sectionId, categoryId, threadId, 10).catch(console.error)
-    if (ids.length > 0){
-        noPostsLabel.hide()
-    }
-    for (let pid of ids){
-        let post = await getPostById(sectionId, categoryId, threadId, pid);
-        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_modified_date"])
-        postContainer.append(card);
-    }
+function createPost(content){
+    return fetch(postsEndpointUrl, {
+        method: "POST",
+        body: JSON.stringify({"content": content}),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
 }
 
-newPostBtn.click((e) => {
+$("#new-post-btn").click((e) => {
     e.preventDefault();
-    let content = contentField.val();
-    if (content.length > 0) {
-        createPost(sectionId, categoryId, threadId, content, "Admin").then(() => {
-            contentField.val("");
-            window.location.reload();
-        }).catch(console.error);
+    let content = $("#content-field").val();
+    $("#content-field").val("");
+    if (content.length == 0) {
+        alert("You cannot post an empty post!");
+        return;
     }
+    createPost(content).then((pid) => {
+        window.location.reload();
+    }).catch((err) => {
+        console.log(err)
+        alert("Failed to create post")
+    })
 })
 
-fetchPageTitle().catch(console.error)
-fetchPosts().catch(console.error)
+async function loadTitle(){
+    let titleRaw = await fetch(threadEndpointUrl + "?tid=" + threadId, {
+        "method": "GET",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    })
+    let json = await titleRaw.json()
+    let title = json["threads"][0]["title"]
+    $("#thread-title").text(title)
+}
+
+async function loadPosts(){
+    let postsRaw = await fetch(postsEndpointUrl, {
+        "method": "GET",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    })
+    let json = await postsRaw.json()
+    let posts = json["posts"]
+    if (posts.length > 0){
+        noPostsLabel.hide()
+    } else {
+        noPostsLabel.show()
+    }
+    for (let post of posts){
+        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_edit_date"])
+        postContainer.append(card)
+    }
+}
+
+loadTitle().catch((err) => {
+    console.error(err)
+    alert("Failed to load title")
+})
+loadPosts().catch((err) => {
+    console.error(err)
+    alert("Failed to load posts")
+})
