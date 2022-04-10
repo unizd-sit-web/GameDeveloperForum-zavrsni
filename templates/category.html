@@ -22,13 +22,6 @@
         </div>
         <div class="list-group thread-container" id="thread-container">
             <p class="no-threads-label" id="no-threads-label">No threads yet</p>
-            {% for thread in threads %}
-                {% with title=thread.title %}
-                    {% with redirUrl=thread.redir_url %}
-                        {% include "titled_card.html" %}
-                    {% endwith %}
-                {% endwith %}
-            {% endfor %}
         </div>
     </div>
     {% include "footer.html" %}
