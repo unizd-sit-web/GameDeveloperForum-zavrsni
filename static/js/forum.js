@@ -1,39 +1,37 @@
-import {getSectionIdByTitle, getCategoriesIds, getCategoryByIdFiltered} from "./storage.js"
-import {createThreadCard} from "./util.js"
+import {API_BASE_URL, STATIC_BASE_URL, createThreadCard} from "./util.js";
 
-// load navbar template
-$("#navbar-placeholder").load("navbar.html");
-// load footer template
-$("#footer-placeholder").load("footer.html");
-
-// constants
 const categoryContainer = $("#category-container")
+const staticCategoryEndpointUrl = STATIC_BASE_URL + "/forum/categories"
+const categoryEndpointUrl = API_BASE_URL + "/forum/categories"
 const noCategoriesLabel = $("#no-categories-label")
+console.log(categoryEndpointUrl)
+$("#new-category-btn").click(() => {
+    let params = new URLSearchParams(window.location.search)
+    params.set("redir_url", window.location.href)
+    params.set("category_route", categoryEndpointUrl)
+    window.location.href = "/forum/categories/new?" + params.toString()
+})
 
-let sectionId
-/**
- * Sets sectionId to the id of this section
- */
-async function fetchId(){
-    sectionId = await getSectionIdByTitle("Forum").catch(console.error)
-}
-
-/**
- * Fetches all categories and adds them to the DOM
- */
-async function fetchCategories(){
-    let ids = await getCategoriesIds(sectionId, 10).catch(console.error)
-    if (ids.length > 0){
+async function loadCategories(){
+    let categoriesRaw = await fetch(categoryEndpointUrl, {
+        "method": "GET",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    })
+    let json = await categoriesRaw.json()
+    let categories = json["categories"]
+    if (categories.length > 0){
         noCategoriesLabel.hide()
+    } else {
+        noCategoriesLabel.show()
     }
-    for (let id of ids){
-        let category = await getCategoryByIdFiltered(sectionId, id, ["title"]).catch(console.error)
-        let queryString = `section_id=${sectionId}&category_id=${id}`
-        let card = createThreadCard(category["title"], "./category.html?" + queryString)
+    for (let category of categories){
+        let card = createThreadCard(category["title"], staticCategoryEndpointUrl + "/" + category["category_id"] + "/threads")
         categoryContainer.append(card)
     }
 }
 
-fetchId().then(() => {
-    fetchCategories().catch(console.error)
-}).catch(console.error)
+loadCategories().catch((err) => {
+    console.error(err)
+    alert("Failed to load categories")
+})
