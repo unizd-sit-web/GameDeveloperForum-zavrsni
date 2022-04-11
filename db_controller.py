@@ -121,50 +121,67 @@ def generate_random_id(length: int) -> str:
     """
         Generates a random alpha-numeric string of length characters.
     """
-    id = ""
-    for x in range(length):
-        is_letter = choice([True, False])
-        if is_letter:
-            id += choice(list("abcdefghijklmnopqrstuvwxyz"))
-        else:
-            id += choice(list("0123456789"))
+    while True:
+        id = ""
+        for x in range(length):
+            is_letter = choice([True, False])
+            if is_letter:
+                id += choice(list("abcdefghijklmnopqrstuvwxyz"))
+            else:
+                id += choice(list("0123456789"))
+        # prevent id from conflicting with /threads/new or /categories/new routes
+        if not id == "new":
+            return id
 
-    return id
-
-def get_categories_in_section(section_name: str, limit: int, skip: int = 0) -> list:
+def get_categories_in_section(section_name: str, limit: int, skip: int = 0, filter = None) -> list:
     """
         Returns a list of limit categories in the section or None if the section does not exist.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
+        The filter field which takes in a category id, is optional and can be used to return a list that contains
+        info about the category with the specified id only.
     """
     section = mongo.db.sections.find_one({"title": section_name})
     if section is None:
         raise NoSuchElementException(f"section called {section_name} does not exist")
     section_id = section["section_id"]
 
-    return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).skip(skip).limit(limit))
+    if filter is None:
+        return list(mongo.db.categories.find({"parent_section_id": section_id}, category_projection_map).skip(skip).limit(limit))
+    else:
+        return list(mongo.db.categories.find({"parent_section_id": section_id, "category_id": filter}, category_projection_map).limit(1))
 
-def get_threads_in_category(category_id: str, limit: int, skip: int = 0) -> list:
+def get_threads_in_category(category_id: str, limit: int, skip: int = 0, filter: str = None) -> list:
     """
         Returns a list of limit threads in the category.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
+        The filter field which takes in a thread id, is optional and can be used to return a list that contains
+        info about the thread with the specified id only.
     """
     category = mongo.db.categories.find_one({"category_id": category_id})
     if category is None:
         raise NoSuchElementException(f"category with id {category_id} does not exist")
 
-    return list(mongo.db.threads.find({"parent_category_id": category_id}, thread_projection_map).skip(skip).limit(limit))
+    if filter is None:
+        return list(mongo.db.threads.find({"parent_category_id": category_id}, thread_projection_map).skip(skip).limit(limit))
+    else:
+        return list(mongo.db.threads.find({"parent_category_id": category_id, "thread_id": filter}, thread_projection_map).limit(1))
 
-def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0) -> list:
+def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0, filter: str = None) -> list:
     """
         Returns a list of limit posts in the thread.
         If specified, skip makes the controller skip n amount of entries allowing the user to page content.
+        The filter field which takes in a post id, is optional and can be used to return a list that contains
+        info about the post with the specified id only.
     """
     thead = mongo.db.threads.find_one({"thread_id": thread_id})
     if thead is None:
         raise NoSuchElementException(f"thread called {thread_id} does not exist")
         
-    return list(mongo.db.posts.find({"parent_thread_id": thread_id}, post_projection_map).skip(skip).limit(limit))
-
+    if filter is None:
+        return list(mongo.db.posts.find({"parent_thread_id": thread_id}, post_projection_map).skip(skip).limit(limit))
+    else:
+        return list(mongo.db.posts.find({"parent_thread_id": thread_id, "post_id": filter}, post_projection_map).limit(1))
+        
 def create_category(title: str, section_name: str) -> str:
     """
         Creates a category in the section.
