@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/footer.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/section.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/thread.css')}}">
+    <script src="{{url_for('static', filename='js/forum.js')}}" type="module" defer></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/bootstrap/css/bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='js/bootstrap/js/bootstrap.min.js')}}" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+<body>
+    {% include "navbar.html" %}
+    <div class="container content-root-div">
+        <div class="section-title">
+            <h1>Forum</h1>
+            <button id="new-category-btn" class="btn btn-primary btn-right">New Category</button>
+        </div>
+        <div id="category-container" class="list-group thread-container">
+            <p id="no-categories-label" class="no-threads-label">No categories yet</p>
+        </div>
+    </div>
+    {% include "footer.html" %}
+</body>
+</html>

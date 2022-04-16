@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/bootstrap/css/bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='js/bootstrap/js/bootstrap.min.js')}}" defer></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/footer.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/thread.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/section.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/post.css')}}">
+    <script src="{{url_for('static', filename='js/thread.js')}}" type="module" defer></script>
+    <title>Thread</title>
+</head>
+<body>
+    {% include "navbar.html" %}
+    <div class="container content-root-div">
+        <div class="section-title">
+            <h1 id="thread-title">Thread</h1>
+        </div>
+        <div id="post-container" class="list-group post-container mt-5">
+            <p id="no-posts-label" class="no-threads-label">No posts yet</p>
+        </div>
+        <form class="mt-5">
+            <div class="form-group">
+                <label for="content-field"></label>
+                <textarea class="form-control" id="content-field" rows="3" placeholder="What would you like to say?"></textarea>
+            </div>
+            <button id="new-post-btn" class="btn btn-primary mt-2">New post</button>
+        </form>
+    </div>
+    {% include "footer.html" %}
+</body>
+</html>

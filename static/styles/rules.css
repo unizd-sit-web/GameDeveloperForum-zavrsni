@@ -1,0 +1,11 @@
+.rules-list {
+    list-style-type: none;
+}
+
+.rules-list-good li::before{
+    content: "✔ "
+}
+
+.rules-list-bad li::before{
+    content: "❌ "
+}

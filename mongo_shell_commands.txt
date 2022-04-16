@@ -1,0 +1,8 @@
+use GameDevForum
+db.createCollection("sections")
+db.createCollection("categories")
+db.createCollection("threads")
+db.createCollection("posts")
+db.sections.insertOne({"section_id":"fjg83jgiew","title":"news","categories":["news-category"]})
+db.sections.insertOne({"section_id":"ghfz46gk85","title":"forum","categories":[]})
+db.categories.insertOne({"category_id":"news-category","title":"news_category","parent_section_id":"fjg83jgiew","threads":[]})

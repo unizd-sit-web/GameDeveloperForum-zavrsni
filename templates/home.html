@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Developer Forum</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/section.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/footer.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/bootstrap/css/bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='js/bootstrap/js/bootstrap.min.js')}}" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+<body>
+    {% include "navbar.html" %}
+    <div class="container content-root-div">
+        <div class="section-title">
+            <h1>Welcome</h1>
+        </div>
+        <div class="list-group content-container" id="thread-container">
+            <p>Welcome to the Game Developer Forum!</p>
+            <p>This is the place to go to if you want to ask questions about development 
+                in general or share your ideas with other developers.
+            </p>
+            <p>These links mighht be helpful to you if you're new here:</p>
+            <ul>
+                <li><a href="/rules">Rules</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/tos">Terms of service</a></li>
+                <li><a href="/privacy">Privacy policy</a></li>
+            </ul>
+        </div>
+    </div>
+    {% include "footer.html" %}
+</body>
+
+</html>

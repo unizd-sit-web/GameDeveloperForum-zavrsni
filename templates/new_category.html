@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New category</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="{{url_for('static', filename='js/new_category.js')}}" type="module" defer></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/footer.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/bootstrap/css/bootstrap.min.css')}}">
+    <script src="{{url_for('static', filename='js/bootstrap/js/bootstrap.min.js')}}" defer></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/thread.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='styles/section.css')}}">
+</head>
+<body>
+    {% include "navbar.html" %}
+    <div class="container content-root-div">
+        <div class="section-title">
+            <h1>New category</h1>
+            <button id="new-category-btn" class="btn btn-primary btn-right">Create category</button>
+        </div>
+        <form>
+            <div class="form-group mb-5 mt-5">
+                <label for="title-field">Title</label>
+                <input type="text" class="form-control" id="title-field" placeholder="Enter title">
+            </div>
+        </form>
+    </div>
+    {% include "footer.html" %}
+</body>
+</html>

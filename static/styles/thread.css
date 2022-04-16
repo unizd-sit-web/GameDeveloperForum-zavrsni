@@ -1,0 +1,13 @@
+.thread-container {
+    margin-top: 100px;
+    background-color: #dcdde1;
+    border: 0.002px solid rgb(92, 102, 116);
+    border-radius: 2px;
+}
+
+.no-threads-label {
+    position: relative;
+    top:5px;
+    text-align: center;
+    font-size: large;
+}

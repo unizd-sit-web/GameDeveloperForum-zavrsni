@@ -1,0 +1,74 @@
+{
+    "sections": {
+        "21310": {
+            "id": 21310,
+            "title": "News",
+            "categories": {
+                "969896": {
+                    "id": 969896,
+                    "title": "News category",
+                    "threads": {
+                        "138888": {
+                            "id": 138888,
+                            "categoryId": "969896",
+                            "title": "zer",
+                            "posts": {
+                                "143049": {
+                                    "id": 143049,
+                                    "threadId": 138888,
+                                    "content": "wurweurw",
+                                    "author": "Admin",
+                                    "creation_date": "Tuesday, December 7, 2021",
+                                    "last_modified_date": "Tuesday, December 7, 2021"
+                                },
+                                "882060": {
+                                    "id": 882060,
+                                    "threadId": "138888",
+                                    "content": "rj",
+                                    "author": "Admin",
+                                    "creation_date": "Tuesday, December 7, 2021",
+                                    "last_modified_date": "Tuesday, December 7, 2021"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "215125": {
+            "id": 215125,
+            "title": "Forum",
+            "categories": {
+                "7697": {
+                    "id": 7697,
+                    "title": "Unity",
+                    "threads": {
+                        "697724": {
+                            "id": 697724,
+                            "categoryId": "7697",
+                            "title": "ewzew",
+                            "posts": {
+                                "351998": {
+                                    "id": 351998,
+                                    "threadId": 697724,
+                                    "content": "zwzwez",
+                                    "author": "Admin",
+                                    "creation_date": "Tuesday, December 7, 2021",
+                                    "last_modified_date": "Tuesday, December 7, 2021"
+                                },
+                                "448882": {
+                                    "id": 448882,
+                                    "threadId": "697724",
+                                    "content": "trk",
+                                    "author": "Admin",
+                                    "creation_date": "Tuesday, December 7, 2021",
+                                    "last_modified_date": "Tuesday, December 7, 2021"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
