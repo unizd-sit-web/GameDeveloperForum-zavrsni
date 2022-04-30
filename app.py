@@ -1,20 +1,41 @@
 from flask import render_template, request, Response, redirect
+from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 from app_factory import create_app
 from db_controller import *
 from datetime import datetime
 
 config = {
-    "MONGO_URI" : "mongodb://localhost:27017/GameDevForum"
+    "MONGO_URI" : "mongodb://localhost:27017/GameDevForum",
 }
 
 app = create_app(config)
+app.secret_key = "abc"
 CORS(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 # constants
 PAGE_ELEMENT_COUNT = 10
 
+# user loading (for login)
+class User(UserMixin):
+    def __init__(self, username, password_hash, email, id) -> None:
+        self.username = username
+        self.password_hash = password_hash
+        self.email = email
+        self.id = id
+        
+users = []
+
+@login_manager.user_loader
+def load_user(user_id):
+    for user in users:
+        if user.id == user_id:
+            return user
+    return None
 """ 
     Static/API server structure:
 
@@ -133,6 +154,11 @@ PAGE_ELEMENT_COUNT = 10
         /api/<section_name>/categories/<category_id>/threads/<thread_id>/posts
             GET: get all posts in thread
 
+        /api/login
+            POST: request to authenticate with the api
+        
+        /api/logout
+            GET: request to logout
 """
 
 """
@@ -411,3 +437,38 @@ def api_get_posts(section_name, category_id, thread_id):
         return json.dumps({"posts": posts}) 
     except NoSuchElementException:
         return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
+# authentication request handler
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    auth_data = request.get_json()
+    if auth_data == None or len(auth_data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+    username = auth_data["username"]
+    password = auth_data["password"]
+    try:
+        db_user = get_user_by_username(username)
+        if db_user == None:
+            return json.dumps({"error": "Invalid username or password"}), 401
+        if check_password_hash(db_user["password_hash"], password):
+            user = User(db_user["username"], db_user["password_hash"], db_user["email"], db_user["user_id"])
+            login_user(user)
+            users.append(user)
+            return json.dumps({"success": "Logged in successfully"}), 200
+        else:
+            return json.dumps({"error": "Invalid username or password"}), 401
+    except NoSuchElementException:
+        return json.dumps({"error": "Invalid username or password"}), 401
+
+# logout request handler
+@app.route("/api/logout", methods=["POST"])
+@login_required
+def api_logout():
+    logout_user()
+    return json.dumps({"success": "Logged out successfully"}), 200
+
+# login system test
+@app.route(("/api/secret"), methods=["GET"])
+@login_required
+def api_secret():
+    return json.dumps({"secret": "This is a secret"})
