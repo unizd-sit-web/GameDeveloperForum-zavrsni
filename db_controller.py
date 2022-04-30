@@ -46,12 +46,20 @@ from random import choice
             * posts
                 {
                     _id: ObjectId(...),
-                    "author": "...",
+                    "author_id": "...",
                     "content": "...",
                     "post_id": "...",
                     "parent_thread_id": "...",
                     "creation_date": "...",
                     "last_edit_date": "..."
+                }
+            * users
+                {
+                    _id: ObjectId(...),
+                    "user_id": "...",
+                    "username": "...",
+                    "password_hash": "...",
+                    "email": "..."
                 }
 
     Note: _id is a internal MongoDB generated field that should not be sent to the client.
@@ -60,15 +68,19 @@ from random import choice
         [✔] get categories
         [✔] get threads
         [✔] get posts
+        [] get user
         [✔] create category
         [✔] create thread
         [✔] create post
+        [] create user
         [✔] update category
         [✔] update thread
         [✔] upate post
+        [] update user
         [✔] delete category
         [✔] delete thread
         [✔] delete post
+        [] delete user
 """
 
 """
@@ -100,12 +112,19 @@ thread_projection_map = {
 }
 post_projection_map = {
     "_id": 0,
-    "author": 1,
+    "author_id": 1,
     "content": 1,
     "post_id": 1,
     "parent_thread_id": 1,
     "creation_date": 1,
     "last_edit_date": 1
+}
+user_projection_map = {
+    "_id": 0,
+    "user_id": 1,
+    "username": 1,
+    "password_hash": 1,
+    "email": 1,
 }
 
 ID_CHAR_COUNT = 10
@@ -114,6 +133,12 @@ ID_CHAR_COUNT = 10
 class NoSuchElementException(Exception):
     """
         Used when the requested element is not found in the database.
+    """
+    pass
+
+class UsernameInUseException(Exception):
+    """
+        Used when the username is already in use.
     """
     pass
 
@@ -182,6 +207,12 @@ def get_posts_in_thread(thread_id: str, limit: int, skip: int = 0, filter: str =
     else:
         return list(mongo.db.posts.find({"parent_thread_id": thread_id, "post_id": filter}, post_projection_map).limit(1))
         
+def get_user_by_username(username: str) -> dict:
+    """
+        Returns a dictionary containing user data or returns None if the user does not exist.
+    """
+    return mongo.db.users.find_one({"username": username})
+
 def create_category(title: str, section_name: str) -> str:
     """
         Creates a category in the section.
@@ -247,7 +278,7 @@ def create_thread(title: str, category_id: str) -> str:
 
     return thread_id
 
-def create_post(author: str, content: str, creation_date: str, thread_id: str) -> str:
+def create_post(author_id: str, content: str, creation_date: str, thread_id: str) -> str:
     """
         Creates a post in the thread.
 
@@ -261,8 +292,8 @@ def create_post(author: str, content: str, creation_date: str, thread_id: str) -
         raise NoSuchElementException(f"thread called {thread_id} does not exist")
     
     # validate input
-    if author is None or len(author) == 0:
-        raise ValueError("author cannot be empty")
+    if author_id is None or len(author_id) == 0:
+        raise ValueError("author_id cannot be empty")
     if content is None or len(content) == 0:
         raise ValueError("content cannot be empty")
     if creation_date is None or len(creation_date) == 0:
@@ -271,7 +302,7 @@ def create_post(author: str, content: str, creation_date: str, thread_id: str) -
     # create post
     post_id = generate_random_id(ID_CHAR_COUNT)
     post = {
-        "author": author,
+        "author_id": author_id,
         "content": content,
         "post_id": post_id,
         "parent_thread_id": parent_thread["thread_id"],
@@ -284,6 +315,39 @@ def create_post(author: str, content: str, creation_date: str, thread_id: str) -
     mongo.db.threads.update_one({"thread_id": parent_thread["thread_id"]}, {"$push": {"posts": post_id}})
 
     return post_id
+
+def create_user(username: str, password_hash: str, email: str):
+    """
+        Creates a user and returns its id.
+
+        Raises UsernameInUse if username is already being used.
+
+        Raises ValueError if required fields are empty.
+    """
+    # validate input
+    if username is None or len(username) == 0:
+        raise ValueError("username cannot be empty")
+    if password_hash is None or len(password_hash) == 0:
+        raise ValueError("password_hash cannot be empty")
+    if email is None or len(email) == 0:
+        raise ValueError("email cannot be empty")
+
+    # check if username already exists
+    user = mongo.db.users.find_one({"username": username})
+    if user is not None:
+        raise UsernameInUseException(f"username {username} is already taken")
+
+    # create user
+    user_id = generate_random_id(ID_CHAR_COUNT)
+    user = {
+        "username": username,
+        "password_hash": password_hash,
+        "email": email,
+        "user_id": user_id
+    }
+    mongo.db.users.insert_one(user)
+
+    return user_id
 
 def update_category(category_id: str, new_data: str) -> None:
     """
@@ -370,6 +434,41 @@ def update_post(post_id: str, new_data: dict) -> None:
     # update post
     mongo.db.posts.update_one({"post_id": post_id}, {"$set": to_update})
 
+def update_user(user_id: str, new_data: dict) -> None:
+    """
+        Updates the user data by overwriting fields with new_data.
+
+        Raises NoSuchElementException if user does not exist.
+    """
+    # check if user exists
+    user = mongo.db.users.find_one({"user_id": user_id})
+    if user is None:
+        raise NoSuchElementException(f"user called {user_id} does not exist")
+
+    # validate input
+    if new_data is None or len(new_data) == 0:
+        raise ValueError("new_data cannot be empty")    
+    
+    # filter fields
+    to_update = {}
+    if "username" in new_data:
+        if new_data["username"] is None or len(new_data["username"]) == 0:
+            raise ValueError("new_data.username cannot be empty")
+        to_update["username"] = new_data["username"]
+    if "password_hash" in new_data:
+        if new_data["password_hash"] is None or len(new_data["password_hash"]) == 0:
+            raise ValueError("new_data.password_hash cannot be empty")
+        to_update["password_hash"] = new_data["password_hash"]
+    if "email" in new_data:
+        if new_data["email"] is None or len(new_data["email"]) == 0:
+            raise ValueError("new_data.email cannot be empty")
+        to_update["email"] = new_data["email"]
+    if len(to_update) == 0:
+        raise ValueError("new_data has no valid fields")
+
+    # update user
+    mongo.db.users.update_one({"user_id": user_id}, {"$set": to_update})
+
 def delete_post(post_id: str) -> None:
     """
         Deletes the post.
@@ -428,3 +527,20 @@ def delete_category(category_id: str) -> None:
     
     # delete category
     mongo.db.categories.delete_one({"category_id": category_id})
+
+def delete_user(user_id: str) -> None:
+    """
+        Deletes the user and all its posts.
+
+        Raises NoSuchElementException if user does not exist.
+    """
+    # check if user exists
+    user = mongo.db.users.find_one({"user_id": user_id})
+    if user is None:
+        raise NoSuchElementException(f"user called {user_id} does not exist")
+
+    # update user posts
+    mongo.db.posts.update_many({"author_id": user_id}, {"author_id": None})
+
+    # delete user
+    mongo.db.users.delete_one({"user_id": user_id})
