@@ -10,9 +10,10 @@ export const STATIC_BASE_URL = "http://localhost:5000"
  * @param {string} title 
  * @param {string} redirUrl - when the card is clicked, the user is redirected to this url 
  * @param {boolean} addDeleteButton
+ * @param {boolean} addEditButton
  * @returns Card as a DOM element
  */
- export function createThreadCard(title, redirUrl, addDeleteButton){
+ export function createThreadCard(title, redirUrl, addDeleteButton, addEditButton){
     let card = $("<div>")
     card.addClass("button-card")
 
@@ -28,6 +29,17 @@ export const STATIC_BASE_URL = "http://localhost:5000"
 
     let buttonDiv = $("<div>")
     buttonDiv.addClass("button-card-buttons-div")
+
+    if (addEditButton === true){
+        let editBtnDiv = $("<div>")
+        editBtnDiv.addClass("card-button edit-button-div-thread bordered-button")
+        let editIcon = $("<i>")
+        editIcon.addClass("fa-solid fa-pen p-3")
+        editBtnDiv.append(editIcon)
+
+        buttonDiv.append(editBtnDiv)
+    }
+
     card.append(buttonDiv)
     
     if (addDeleteButton === true){
@@ -96,7 +108,7 @@ export function createCardConfirmMenu(buttonCard, isPost, yesBtnText, noBtnText,
  * @param {boolean} addDeleteButton
  * @returns Card as a DOM element
  */
-export function createPostCard(content, author, createDate, editDate, addDeleteButton){
+export function createPostCard(content, author, createDate, editDate, addDeleteButton, addEditButton){
     let card = $("<div>")
     card.addClass("card")
     let cardBody = $("<div>")
@@ -122,6 +134,18 @@ export function createPostCard(content, author, createDate, editDate, addDeleteB
     
     let buttonDiv = $("<div>")
     buttonDiv.addClass("button-card-buttons-div")
+    if (addEditButton === true){
+        let editBtnDiv = $("<div>")
+        editBtnDiv.addClass("edit-button-div-post")
+        if (addDeleteButton === true){
+            editBtnDiv.addClass("me-3")
+        }
+        let editIcon = $("<i>")
+        editIcon.addClass("fa-solid fa-pen card-footer-button hover-black-foreground")
+        editBtnDiv.append(editIcon)
+
+        buttonDiv.append(editBtnDiv)
+    }
     if (addDeleteButton === true){
         let delBtnDiv = $("<div>")
         delBtnDiv.addClass("delete-button-div-post")
@@ -165,4 +189,37 @@ export function createTitledCard(title, createdDate, redirUrl){
     cardFooter.innerHTML = "Donec id elit non mi porta.";
     card.appendChild(cardFooter);
     return card;
+}
+
+export function createEditCardDialog(buttonCard, textElement, isPost, yesButtonText, noButtonText, yesButtonCallback, noButtonCallback){
+    let otherDiv = $($(buttonCard).find(".button-card-other-div")[0])
+    otherDiv.addClass("border")
+    let editField
+    if (isPost === true){
+        editField = $("<textarea>")
+        editField.addClass("form-control")
+        editField.val(textElement.innerHTML)
+        editField.css("resize", "none")
+    } else {
+        editField = $("<input>")
+        editField.addClass("m-1 list-group-item list-group-item-action border")
+        editField.attr("style", "width: 40%")
+        editField.attr("type", "text")
+        editField.val(textElement.innerHTML)
+    }
+    $(textElement).parent().append(editField)
+    editField.focus()
+    $(textElement).hide()
+
+    createCardConfirmMenu(buttonCard, isPost, yesButtonText, noButtonText, () => {
+        editField.remove()
+        $(textElement).show()
+        otherDiv.removeClass("border")
+        yesButtonCallback(editField.val())
+    }, () => {
+        editField.remove()
+        $(textElement).show()
+        otherDiv.removeClass("border")
+        noButtonCallback()
+    })
 }
