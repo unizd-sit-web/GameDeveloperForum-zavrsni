@@ -1,4 +1,4 @@
-import {API_BASE_URL, STATIC_BASE_URL, createThreadCard} from "./util.js";
+import {API_BASE_URL, STATIC_BASE_URL, createCardConfirmMenu, createEditCardDialog, createThreadCard} from "./util.js";
 
 const threadContainer = $("#thread-container")
 const staticThreadEndpointUrl = STATIC_BASE_URL + "/news/categories/news-category/threads"
@@ -27,9 +27,53 @@ async function loadThreads(){
         noThreadsLabel.show()
     }
     for (let thread of threads){
-        let card = createThreadCard(thread["title"], staticThreadEndpointUrl + "/" + thread["thread_id"] + "/posts")
+        let card = createThreadCard(thread["title"], staticThreadEndpointUrl + "/" + thread["thread_id"] + "/posts", true, true)
+        let delBtn = $(card).find(".delete-button-div-thread")[0]
+        $(delBtn).on("click", () => {
+            createCardConfirmMenu(card, false, "Delete", "Cancel", () => {
+                deleteThread(thread["thread_id"])
+            }, () => {})
+        })
+        let editBtn = $(card).find(".edit-button-div-thread")[0]
+        $(editBtn).on("click", () => {
+            let link = $(card).find(".list-group-item,list-group-item-action,p-3")[0]
+            createEditCardDialog(card, link, false, "Edit", "Cancel", (newTitle) => {
+                updateThreadTitle(thread["thread_id"],newTitle)
+            }, () => {})
+        })
         threadContainer.append(card)
     }
+}
+
+function deleteThread(tid){
+    fetch(threadEndpointUrl + "/" + tid, {
+        "method": "DELETE",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    })
+    .then(() => {
+        window.location.reload()
+    }).catch((err) => {
+        console.error(err)
+        alert("Failed to delete thread")
+    })
+}
+
+function updateThreadTitle(tid, newTitle){
+    fetch(threadEndpointUrl + "/" + tid, {
+        "method": "PUT",
+        "body": JSON.stringify({"title": newTitle}),
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    }).then(() => {
+        window.location.reload()
+    }).catch((err) => {
+        console.error(err)
+        alert("Failed to update thread title")
+    })
 }
 
 loadThreads().catch((err) => {

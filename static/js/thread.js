@@ -1,4 +1,4 @@
-import {API_BASE_URL, createPostCard} from "./util.js"
+import {API_BASE_URL, createCardConfirmMenu, createEditCardDialog, createPostCard} from "./util.js"
 
 const postContainer = $("#post-container")
 const noPostsLabel = $("#no-posts-label")
@@ -64,9 +64,51 @@ async function loadPosts(){
         noPostsLabel.show()
     }
     for (let post of posts){
-        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_edit_date"])
+        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_edit_date"], true, true)
+        let delBtn = $(card).find(".delete-button-div-post")[0]
+        let btnCard = $(card).find(".button-card")[0]
+        $(delBtn).on("click", () => {
+            createCardConfirmMenu(btnCard, true, "Delete", "Cancel", () => {
+                deletePost(post["post_id"])
+            }, () => {})
+        })
+        let editBtn = $(card).find(".edit-button-div-post")[0]
+        $(editBtn).on("click", () => {
+            let p = $(card).find(".card-text")[0]
+            createEditCardDialog(btnCard, p, true, "Edit", "Cancel", (newText) => {
+                updatePost(post["post_id"], newText)
+            }, () => {})
+        })
         postContainer.append(card)
     }
+}
+
+function deletePost(pid){
+    fetch(postsEndpointUrl + "/" + pid, {
+        "method": "DELETE",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    }).then(() => {
+        window.location.reload();
+    }).catch((err) => {
+        console.log(err)
+        alert("Failed to delete post")
+    })
+}
+
+function updatePost(pid, newContent){
+    fetch(postsEndpointUrl + "/" + pid, {
+        "method": "PUT",
+        "body": JSON.stringify({"content": newContent}),
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }).then(() => {
+        window.location.reload();
+    }).catch((err) => {
+        console.log(err)
+        alert("Failed to update post")
+    })
 }
 
 loadTitle().catch((err) => {
