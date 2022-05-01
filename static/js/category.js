@@ -1,4 +1,4 @@
-import {API_BASE_URL, createThreadCard, STATIC_BASE_URL} from "./util.js"
+import {API_BASE_URL, createThreadCard, createCardConfirmMenu, STATIC_BASE_URL} from "./util.js"
 
 const threadContainer = $("#thread-container")
 const noThreadsLabel = $("#no-threads-label")
@@ -46,9 +46,29 @@ async function loadThreads(){
         noThreadsLabel.show()
     }
     for (let thread of json["threads"]){
-        let card = createThreadCard(thread["title"], staticThreadEndpointUrl + "/" + thread["thread_id"] + "/posts")
+        let card = createThreadCard(thread["title"], staticThreadEndpointUrl + "/" + thread["thread_id"] + "/posts", true)
+        let delBtn = $(card).find(".delete-button-div-thread")[0]
+        $(delBtn).on("click", () => {
+            createCardConfirmMenu(card, false, "Delete", "Cancel", () => {
+                deleteThread(thread["thread_id"])
+            }, () => {})
+        })
         threadContainer.append(card)
     }
+}
+
+function deleteThread(tid){
+    fetch(threadEndpointUrl + "/" + tid, {
+        "method": "DELETE",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    })
+    .then(() => {
+        window.location.reload()
+    }).catch((err) => {
+        console.error(err)
+        alert("Failed to delete thread")
+    })
 }
 
 loadTitle().catch((err) => {
