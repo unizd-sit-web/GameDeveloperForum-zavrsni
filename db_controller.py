@@ -540,7 +540,7 @@ def delete_user(user_id: str) -> None:
         raise NoSuchElementException(f"user called {user_id} does not exist")
 
     # update user posts
-    mongo.db.posts.update_many({"author_id": user_id}, {"author_id": None})
+    mongo.db.posts.update_many({"author_id": user_id}, {"$set":{"author_id": None}})
 
     # delete user
     mongo.db.users.delete_one({"user_id": user_id})

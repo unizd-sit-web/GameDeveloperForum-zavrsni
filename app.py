@@ -1,5 +1,5 @@
 from flask import render_template, request, Response, redirect
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
+from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
@@ -437,6 +437,50 @@ def api_get_posts(section_name, category_id, thread_id):
         return json.dumps({"posts": posts}) 
     except NoSuchElementException:
         return json.dumps({"error": f"Thread with id {thread_id} does not exist"}), 404
+
+# request to create account
+@app.route("/api/users", methods=["POST"])
+def api_create_account():
+    """
+        request payload:
+        {
+            "username": "username_here",
+            "password": "password_here",
+            "email": "email_here"
+        }
+    """
+    data = request.get_json()
+    if data == None or len(data) == 0:
+        return json.dumps({"error": "Invalid request body"}), 400
+    if not "username" in data or not "password" in data or not "email" in data:
+        return json.dumps({"error": "Invalid request body"}), 400
+    if len(data["username"]) == 0 or len(data["password"]) == 0 or len(data["email"]) == 0:
+            return json.dumps({"error": "Invalid request body"}), 400
+
+    try:
+        create_user(data["username"], generate_password_hash(data["password"]), data["email"])
+    except ValueError:
+        return json.dumps({"error": "Invalid request body"}), 400
+    except UsernameInUseException:
+        return json.dumps({"error": "Username already exists"}), 400
+
+    return Response(status=204)
+
+# reguest to delete account
+@app.route("/api/users/<user_id>", methods=["DELETE"])
+@login_required
+def api_delete_account(user_id):
+    if not current_user.id == user_id:
+        return json.dumps({"error": "You are not authorized to delete this account"}), 403
+
+    try:
+        delete_user(user_id)
+        logout_user()
+    except NoSuchElementException:
+        return json.dumps({"error": f"User with id {user_id} does not exist"}), 404
+
+    return Response(status=204)
+    
 
 # authentication request handler
 @app.route("/api/login", methods=["POST"])
