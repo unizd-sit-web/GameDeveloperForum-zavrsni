@@ -9,14 +9,82 @@ export const STATIC_BASE_URL = "http://localhost:5000"
  * 
  * @param {string} title 
  * @param {string} redirUrl - when the card is clicked, the user is redirected to this url 
+ * @param {boolean} addDeleteButton
  * @returns Card as a DOM element
  */
- export function createThreadCard(title, redirUrl){
-    let a = $("<a>")
-    a.attr("href", redirUrl)
-    a.addClass("list-group-item list-group-item-action p-3")
-    a.text(title)
-    return a
+ export function createThreadCard(title, redirUrl, addDeleteButton){
+    let card = $("<div>")
+    card.addClass("button-card")
+
+    let linkDiv = $("<div>")
+    linkDiv.addClass("button-card-other-div")
+    let link = $("<a>")
+    link.attr("href", redirUrl)
+    link.text(title)
+    link.addClass("list-group-item list-group-item-action p-3")
+    linkDiv.append(link)
+
+    card.append(linkDiv)
+
+    let buttonDiv = $("<div>")
+    buttonDiv.addClass("button-card-buttons-div")
+    card.append(buttonDiv)
+    
+    if (addDeleteButton === true){
+        let delBtnDiv = $("<div>")
+        delBtnDiv.addClass("card-button delete-button-div-thread bordered-button")
+        let deleteIcon = $("<i>")
+        deleteIcon.addClass("fa-solid fa-trash p-3")
+        delBtnDiv.append(deleteIcon)
+
+        buttonDiv.append(delBtnDiv)
+    }
+
+    return card.get(0)
+}
+
+/**
+ * 
+ * @param {HTMLElement} buttonCard - the card to add the menu to
+ * @param {string} yesBtnText - the text on the yes button
+ * @param {string} noBtnText - the text on the no button
+ * @param {Function} yesBtnCallback - called when the yes button is clicked
+ * @param {Function} noBtnCallback - called when the no button is clicked
+ */
+export function createCardConfirmMenu(buttonCard, isPost, yesBtnText, noBtnText, yesBtnCallback, noBtnCallback){
+    let cardButtonDiv = $(buttonCard).find(".button-card-buttons-div")[0]
+    let yesBtn = $("<button>")
+    yesBtn.addClass("btn btn-danger")
+    yesBtn.text(yesBtnText)
+    yesBtn.css("margin-right", "10px")
+    let noBtn = $("<button>")
+    noBtn.addClass("btn btn-success")
+    noBtn.text(noBtnText)
+    let dialogDiv = $("<div>")
+    dialogDiv.addClass("button-card-buttons-div bordered-button")
+    if (isPost === true){
+        dialogDiv.addClass("confirm-menu-post")
+    } else {
+        dialogDiv.addClass("confirm-menu-thread")
+    }
+    dialogDiv.append(yesBtn)
+    dialogDiv.append(noBtn)
+    dialogDiv.css("display", "flex")
+    dialogDiv.css("justify-content", "center")
+    dialogDiv.css("align-items", "center")
+    yesBtn.click(() => {
+        yesBtnCallback()
+        dialogDiv.remove()
+        $(cardButtonDiv).show()
+    })
+    noBtn.click(() => {
+        noBtnCallback()
+        dialogDiv.remove()
+        $(cardButtonDiv).show()
+    })
+    $(buttonCard).append(dialogDiv)
+    dialogDiv.show()
+    $(cardButtonDiv).hide()
 }
 
 /**
@@ -25,9 +93,10 @@ export const STATIC_BASE_URL = "http://localhost:5000"
  * @param {string} author 
  * @param {string} createDate 
  * @param {string} editDate 
+ * @param {boolean} addDeleteButton
  * @returns Card as a DOM element
  */
-export function createPostCard(content, author, createDate, editDate){
+export function createPostCard(content, author, createDate, editDate, addDeleteButton){
     let card = $("<div>")
     card.addClass("card")
     let cardBody = $("<div>")
@@ -39,7 +108,9 @@ export function createPostCard(content, author, createDate, editDate){
     cardText.addClass("card-text")
     cardText.text(content)
     let cardFooter = $("<div>")
-    cardFooter.addClass("card-footer")
+    cardFooter.addClass("card-footer button-card")
+    let cardFooterTextDiv = $("<div>")
+    cardFooterTextDiv.addClass("button-card-other-div-post")
     let cardFooterText = $("<small>")
     cardFooterText.addClass("text-muted")
     if (createDate == editDate){
@@ -47,7 +118,22 @@ export function createPostCard(content, author, createDate, editDate){
     } else {
         cardFooterText.text("Created: " + createDate + " Edited: " + editDate)
     }
-    cardFooter.append(cardFooterText)
+    cardFooterTextDiv.append(cardFooterText)
+    
+    let buttonDiv = $("<div>")
+    buttonDiv.addClass("button-card-buttons-div")
+    if (addDeleteButton === true){
+        let delBtnDiv = $("<div>")
+        delBtnDiv.addClass("delete-button-div-post")
+        let deleteIcon = $("<i>")
+        deleteIcon.addClass("fa-solid fa-trash card-footer-button hover-black-foreground")
+        delBtnDiv.append(deleteIcon)
+
+        buttonDiv.append(delBtnDiv)
+    }
+    
+    cardFooter.append(cardFooterTextDiv)
+    cardFooter.append(buttonDiv)
     cardBody.append(cardTitle)
     cardBody.append(cardText)
     card.append(cardBody)
