@@ -1,4 +1,4 @@
-import {API_BASE_URL, createPostCard} from "./util.js"
+import {API_BASE_URL, createCardConfirmMenu, createPostCard} from "./util.js"
 
 const postContainer = $("#post-container")
 const noPostsLabel = $("#no-posts-label")
@@ -64,9 +64,29 @@ async function loadPosts(){
         noPostsLabel.show()
     }
     for (let post of posts){
-        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_edit_date"])
+        let card = createPostCard(post["content"], post["author"], post["creation_date"], post["last_edit_date"], true)
+        let delBtn = $(card).find(".delete-button-div-post")[0]
+        let btnCard = $(card).find(".button-card")[0]
+        $(delBtn).on("click", () => {
+            createCardConfirmMenu(btnCard, true, "Delete", "Cancel", () => {
+                deletePost(post["post_id"])
+            }, () => {})
+        })
         postContainer.append(card)
     }
+}
+
+function deletePost(pid){
+    fetch(postsEndpointUrl + "/" + pid, {
+        "method": "DELETE",
+        "mode": "cors",
+        "Access-Control-Allow-Origin": "*"
+    }).then(() => {
+        window.location.reload();
+    }).catch((err) => {
+        console.log(err)
+        alert("Failed to delete post")
+    })
 }
 
 loadTitle().catch((err) => {
