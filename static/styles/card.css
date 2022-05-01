@@ -1,0 +1,98 @@
+:root {
+    --bootstrap-card-border-color: rgba(0,0,0,.125);
+    --card-footer-color: #F7F7F7;
+    --thread-card-delete-btn-bg: #c0392b;
+    --thread-card-delete-gtn-fg: black;
+    --thread-card-edit-btn-bg: #f39c12;
+    --thread-card-edit-btn-fg: black;
+    --post-card-delete-btn-bg: rgba(0,0,0,0);
+    --post-card-delete-btn-fg: #ADADAD;
+    --post-card-edit-btn-bg: #f39c12;
+    --post-card-edit-btn-fg: #ADADAD;
+}
+
+.button-card {
+    display: flex;
+}
+
+.button-card-other-div {
+    flex: 1;
+    display: flex;
+    background-color: white;
+}
+
+.button-card-other-div-post {
+    flex: 1;
+    display: flex;
+    background-color: var(--card-footer-color);
+}
+
+.button-card-buttons-div {
+    text-align: center;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+}
+
+.card-button {
+    height: 100%;
+    width: fit-content;
+}
+
+.bordered-button {
+    border: 1px solid var(--bootstrap-card-border-color);
+}
+
+.delete-button-div-thread {
+    background-color: white;
+}
+
+.delete-button-div-thread:hover {
+    background-color: #c0392b;
+    transition-duration: 0.1s;
+}
+
+.delete-button-div-post {
+    background-color: transparent;
+    color: var(--post-card-delete-btn-fg);
+}
+
+.delete-button-div-post:hover {
+    color: black;
+    transition-duration: 0.1s;
+}
+
+.edit-button-div-thread {
+    background-color: white;
+}
+
+.edit-button-div-thread:hover {
+    background-color: var(--thread-card-edit-btn-bg);
+    transition-duration: 0.1s;
+}
+
+.edit-button-div-post {
+    background-color: transparent;
+    color: var(--post-card-edit-btn-fg);
+}
+
+.edit-button-div-post:hover {
+    color: black;
+    transition-duration: 0.1s;
+}
+
+.confirm-menu-thread {
+    background-color: white;
+}
+
+.confirm-menu-post {
+    background-color: var(--card-footer-color);
+}
+
+.disabled-card-link {
+    pointer-events: none;
+}
+
+.thread-edit-field {
+    width: 40%;
+}
